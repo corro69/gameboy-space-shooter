@@ -7,6 +7,8 @@
 #include "windowmap.c"
 #include "background.c"
 #include "backgroundtiles.c"
+#include "clearscreenmap.c"
+#include "clearscreentiles.c"
 #include <rand.h>
 #include <stdbool.h>
 
@@ -17,6 +19,7 @@ struct GameCharacter alienship1;
 struct GameCharacter laser;
 
 UBYTE spritesize = 8;
+const char blankmap[1] = {0x00};
 
 void movegamecharacter(struct GameCharacter* character, UINT8 x, UINT8 y){
     move_sprite(character->spriteids[0],x,y);
@@ -65,6 +68,11 @@ void setupalien1(){
     set_sprite_tile(7,7);
     alien1.spriteids[3] = 7;
 
+//    set_sprite_prop(4, S_PRIORITY);
+//    set_sprite_prop(5, S_PRIORITY);
+//    set_sprite_prop(6, S_PRIORITY);
+//    set_sprite_prop(7, S_PRIORITY);
+
     movegamecharacter(& alien1, alien1.x, alien1.y);
 }
 
@@ -100,6 +108,11 @@ void setupalienship1(){
     alienship1.spriteids[2] = 18;
     set_sprite_tile(19,11);
     alienship1.spriteids[3] = 19;
+
+//    set_sprite_prop(16, S_PRIORITY);
+//    set_sprite_prop(17, S_PRIORITY);
+//    set_sprite_prop(18, S_PRIORITY);
+//    set_sprite_prop(19, S_PRIORITY);
 
     movegamecharacter(&alienship1, alienship1.x,alienship1.y); 
 }
@@ -173,6 +186,24 @@ void move_lasers(){
     }
 }
 
+//UBYTE canplayermove(INT8 movex, INT8 movey, UINT8 playerx, UINT8 playery){
+//    UINT16 indexX, indexY, tileindex;
+//    if(movex<0 || movex == 0){
+//        indexX = (playerx + movex -8)/8;
+//    }
+//    else if(movex>0){
+//        indexX = (playerx + movex -1)/8;
+//    }
+//    if(movey<0 || movey == 0){
+//        indexY = (playery + movey -15)/8;
+//    }
+//    else if(movey>0){
+//        indexY = (playery + movey - 8)/8;
+//    }
+//    tileindex = 20 * indexY + indexX;
+//    return background[tileindex] == 0;   
+//}
+
 void ohjoy(){
 
         if(joypad() & J_LEFT){
@@ -208,49 +239,130 @@ void ohjoy(){
         }
 
         if(joypad() & J_A && !fire){
-            if(laser_active < 3){
+
                 laser.x = player.x;
                 laser.y = player.y - 5;
                 fire = TRUE;
-                laser_active + 1;
 
                 NR10_REG = 0x2F;
                 NR11_REG = 0x4C;
                 NR12_REG = 0xF8;
                 NR13_REG = 0x33;
                 NR14_REG = 0xC7;
-            }
         }
+}
+
+void movecharacters(){
+
+        movegamecharacter(&alien1, alien1.x, alien1.y);
+        movegamecharacter(&alien2, alien2.x, alien2.y);
+        movegamecharacter(&alienship1, alienship1.x, alienship1.y);
+        movegamecharacter(&laser,laser.x, laser.y);
+}
+
+//
+// SOUNDS
+void engine(){
+    NR41_REG = 36;
+    NR42_REG = 70;
+    NR43_REG = 98;
+    NR44_REG = 80;
+}
+
+void died(){
+    NR10_REG = 0x3B;
+    NR11_REG = 0x44;
+    NR12_REG = 0xF7;
+    NR13_REG = 0x74;
+    NR14_REG = 0xC5;
+}
+
+void explosion(){
+ //   NR41_REG = 0x3F;
+ //   NR42_REG = 0xF9;
+//    NR43_REG = 0x6F;
+//    NR44_REG = 0xC0;
+//    NR10_REG = 74;
+//    NR11_REG = 83;
+//    NR12_REG = 69;
+//    NR13_REG = 92;
+//    NR14_REG = 85;
+    NR21_REG = 81;
+    NR22_REG = 84;
+    NR23_REG = 96;
+    NR24_REG = 86;
+}
+
+//
+// Collision Detection and scoring
+
+int scr = 0;
+UINT8 currentscore[1] = {0};
+UINT8 topscore[1] = {0};
+
+void score(){
+    scr += 10;
+    currentscore[0] = scr;
+
+//    if(currentscore[0] >= topscore[0]){
+//        currentscore[0] == topscore[0];
+//    }
 }
 
 UBYTE checkcollision(struct GameCharacter* one, struct GameCharacter* two){
     return(one->x >= two->x && one->x <= two->x + two->width) && (one->y >= two->y && one->y <= two->y + two->height) || (two->x >= one->x && two->x <= one->x + one->width) && (two->y >= one->y && two->y <= one-> y+ one->height);
 }
 
-void explosion(){
-    NR41_REG = 0x3F;
-    NR42_REG = 0xF9;
-    NR43_REG = 0x6F;
-    NR44_REG = 0xC0;
+int lives = 3;
+
+void gameover(){
+    if(lives == 0){
+    died();
+    printf("\n \n \n === GAME OVER === \n \n======= %d",scr, "=====");
+    }
+}
+
+void collisioncheck(){
+    if(checkcollision(&player,&alien1)){
+        alien1.x = 0;
+        alien1.y = 0;
+        died();
+        lives -= 1;
+    }
+    else if(checkcollision(&player, &alien2)){
+        alien2.x = 0;
+        alien2.y = 0;
+        died();
+        lives -= 1;
+    } 
+    else if(checkcollision(&player, &alienship1)){
+        alienship1.x = 0;
+        alienship1.y = 0;
+        died();
+        lives -= 1;
+    }
 }
 
 void laserblast(){
     if(checkcollision(&laser, &alien1)){
             explosion();
+            score();
             alien1.x = 0;
             alien1.y = 0;
         }
 
     if(checkcollision(&laser, &alien2)){
             explosion();
+            score();
             alien2.x = 0;
             alien2.y = 0;
         }
 
     if(checkcollision(&laser, &alienship1)){
             explosion();
+            score();
             alienship1.x = 0;
-            alienship1.y =0;
+            alienship1.y = 0;
         }
 }
 
@@ -282,7 +394,9 @@ void main(){
     SHOW_SPRITES;
     DISPLAY_ON;
 
-    while(!checkcollision(&player,&alien1) && !checkcollision(&player, &alien2) && !checkcollision(&player, &alienship1)){
+    while(1){
+
+        collisioncheck();
                
         scroll_bkg(0,-4);
 
@@ -292,19 +406,12 @@ void main(){
 
         movealiens1();
         
-        movegamecharacter(&alien1, alien1.x, alien1.y);
-        movegamecharacter(&alien2, alien2.x, alien2.y);
-        movegamecharacter(&alienship1, alienship1.x, alienship1.y);
-        movegamecharacter(&laser,laser.x, laser.y);
+        movecharacters();
 
         move_lasers();
 
         performancedelay(2);
+
+        gameover();
     }
-    NR10_REG = 0x3B;
-    NR11_REG = 0x44;
-    NR12_REG = 0xF7;
-    NR13_REG = 0x74;
-    NR14_REG = 0xC5;
-    printf("\n \n \n \n \n === GAME OVER ===");
 }
