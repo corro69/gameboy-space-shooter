@@ -7,10 +7,12 @@
 #include "windowmap.c"
 #include "background.c"
 #include "backgroundtiles.c"
-#include "clearscreenmap.c"
-#include "clearscreentiles.c"
 #include <rand.h>
 #include <stdbool.h>
+#include "splashmap.c"
+#include "splashtiles.c"
+#include "blankmap.c"
+#include "blanktiles.c"
 
 struct GameCharacter player;
 struct GameCharacter alien1;
@@ -19,13 +21,16 @@ struct GameCharacter alienship1;
 struct GameCharacter laser;
 
 UBYTE spritesize = 8;
-const char blankmap[1] = {0x00};
+//const char blankmap[1] = {0x00};
 
-void movegamecharacter(struct GameCharacter* character, UINT8 x, UINT8 y){
-    move_sprite(character->spriteids[0],x,y);
-    move_sprite(character->spriteids[2], x + spritesize, y);
-    move_sprite(character->spriteids[1], x, y + spritesize);
-    move_sprite(character->spriteids[3], x + spritesize, y + spritesize);
+void splashscreen(){
+    set_bkg_data(0, 52, splashtiles);
+    set_bkg_tiles(0,0,20,18,splashmap);
+    SHOW_BKG;
+    DISPLAY_ON;
+    delay(1000);
+    printf("\n \n \n \n \n     Level One \n \n \n \n \n ===Press Start===");
+    waitpad(J_START);
 }
 
 void performancedelay(UINT8 numloops){
@@ -33,6 +38,17 @@ void performancedelay(UINT8 numloops){
     for(i = 0; i < numloops; i++){
         wait_vbl_done();
     }
+}
+
+
+///////////////////////////////
+//Character setup
+//////////////////////////////
+void movegamecharacter(struct GameCharacter* character, UINT8 x, UINT8 y){
+    move_sprite(character->spriteids[0],x,y);
+    move_sprite(character->spriteids[2], x + spritesize, y);
+    move_sprite(character->spriteids[1], x, y + spritesize);
+    move_sprite(character->spriteids[3], x + spritesize, y + spritesize);
 }
 
 void setupplayer(){
@@ -155,9 +171,8 @@ void movealiens1(){
         }
 }
 
-
-#define MAX_LASERS 4
-#define laser_active 0
+int max_laser = 3;
+int laser_active = 0;
 bool fire;
 
 void setuplaser(){
@@ -179,51 +194,131 @@ void setuplaser(){
 }
 
 void move_lasers(){
-    laser.y -= 25;
+        laser.y -= 25;
     if(laser.y > 150){
         laser.y = 0;
         fire = FALSE;
+        laser_active -= 1;
     }
 }
 
-//UBYTE canplayermove(INT8 movex, INT8 movey, UINT8 playerx, UINT8 playery){
-//    UINT16 indexX, indexY, tileindex;
-//    if(movex<0 || movex == 0){
-//        indexX = (playerx + movex -8)/8;
-//    }
-//    else if(movex>0){
-//        indexX = (playerx + movex -1)/8;
-//    }
-//    if(movey<0 || movey == 0){
-//        indexY = (playery + movey -15)/8;
-//    }
-//    else if(movey>0){
-//        indexY = (playery + movey - 8)/8;
-//    }
-//    tileindex = 20 * indexY + indexX;
-//    return background[tileindex] == 0;   
+void storealiens(){
+    player.x = 80;
+    player.y = 130;
+
+    alienship1.x = 0;
+    alienship1.y = 0;
+    
+    alien1.x = 0;
+    alien1.y = 0;
+
+    alien2.x = 0;
+    alien2.y = 0;
+}
+
+
+/////////////////////////////////
+// SOUNDS
+/////////////////////////////////
+void engine(){
+    NR41_REG = 0x36;
+    NR42_REG = 0x70;
+    NR43_REG = 0x98;
+    NR44_REG = 0x80;
+}
+
+void died(){
+    NR10_REG = 0x3B;
+    NR11_REG = 0x44;
+    NR12_REG = 0xF7;
+    NR13_REG = 0x74;
+    NR14_REG = 0xC5;
+
+    storealiens();
+}
+
+void explosion(){
+//   NR41_REG = 0x3F;
+//   NR42_REG = 0xF9;
+//   NR43_REG = 0x6F;
+//   NR44_REG = 0xC0;
+
+    NR41_REG = 0x09;
+    NR42_REG = 0x89;
+    NR43_REG = 0x89;
+    NR44_REG = 0xC0;
+
+//    NR41_REG = 0x09;
+//    NR42_REG = 0x89;
+//    NR43_REG = 0x89;
+//    NR44_REG = 0xC0;
+
+//    NR10_REG = 0x74;
+//    NR11_REG = 0x83;
+//    NR12_REG = 0x69;
+//    NR13_REG = 0x92;
+//    NR14_REG = 0x85;
+
+//    NR21_REG = 0x81;
+//    NR22_REG = 0x84;
+//    NR23_REG = 0x96;
+//    NR24_REG = 0x86;
+}
+
+
+////////////////////////////
+///MAP Detection
+///////////////////////////
+UINT8 playerlocation[2] = {player.x, player.y};
+
+//void canplayermove(UINT8 newplayerX, UINT8 newplayerY){
+//    
+//    UINT16 indexTlx, indexTly, tileindex;
+//    UBYTE result;
+//
+//    indexTlx = (playerlocation[0] - 8) /8;
+//    indexTly = (playerlocation[1] - 17) /8;
+//
+//    tileindex = 20 * indexTlx + indexTly;
 //}
+//    result = background[tileindex] == blankmap[0];   
+
+
+/////////////////////////////////
+//Controls 
+////////////////////////////////
+void pause(){
+
+//    clearbackground();
+
+//    set_bkg_data(0, 52, splashtiles);
+//    set_bkg_tiles(0,0,20,18,splashmap);
+
+    waitpad(J_START);
+
+ //   clearbackground();
+}
 
 void ohjoy(){
 
         if(joypad() & J_LEFT){
-            player.x -= 2;
+            player.x -= 3;
             movegamecharacter(&player, player.x, player.y); 
-                if(player.x <= 20){
-                    player.x = 20; 
+                if(player.x <= 10){
+                    player.x = 10; 
                 } 
         }
 
         if(joypad() & J_RIGHT){
-            player.x += 2;
+            player.x += 3;
             movegamecharacter(&player, player.x, player.y);
-                if(player.x >= 140){
-                    player.x = 140;
+                if(player.x >= 150){
+                    player.x = 150;
                 }
         }
 
         if(joypad()& J_UP){
-            player.y -= 2;
+            player.y -= 3;
             movegamecharacter(&player, player.x, player.y);
                if(player.y <= 60){
                     player.y = 60;
@@ -231,7 +326,7 @@ void ohjoy(){
         }
 
         if(joypad()& J_DOWN){
-            player.y += 2;
+            player.y += 3;
             movegamecharacter(&player, player.x, player.y);
                if(player.y >= 130){
                     player.y = 130;
@@ -239,7 +334,8 @@ void ohjoy(){
         }
 
         if(joypad() & J_A && !fire){
-
+            if(laser_active < max_laser){
+                laser_active += 1;
                 laser.x = player.x;
                 laser.y = player.y - 5;
                 fire = TRUE;
@@ -249,7 +345,12 @@ void ohjoy(){
                 NR12_REG = 0xF8;
                 NR13_REG = 0x33;
                 NR14_REG = 0xC7;
+            }
         }
+
+        if(joypad() & J_START){
+            pause();
+        }  
 }
 
 void movecharacters(){
@@ -260,53 +361,17 @@ void movecharacters(){
         movegamecharacter(&laser,laser.x, laser.y);
 }
 
-//
-// SOUNDS
-void engine(){
-    NR41_REG = 36;
-    NR42_REG = 70;
-    NR43_REG = 98;
-    NR44_REG = 80;
-}
 
-void died(){
-    NR10_REG = 0x3B;
-    NR11_REG = 0x44;
-    NR12_REG = 0xF7;
-    NR13_REG = 0x74;
-    NR14_REG = 0xC5;
-}
-
-void explosion(){
- //   NR41_REG = 0x3F;
- //   NR42_REG = 0xF9;
-//    NR43_REG = 0x6F;
-//    NR44_REG = 0xC0;
-//    NR10_REG = 74;
-//    NR11_REG = 83;
-//    NR12_REG = 69;
-//    NR13_REG = 92;
-//    NR14_REG = 85;
-    NR21_REG = 81;
-    NR22_REG = 84;
-    NR23_REG = 96;
-    NR24_REG = 86;
-}
-
-//
+//////////////////////////////////
 // Collision Detection and scoring
-
+/////////////////////////////////
 int scr = 0;
 UINT8 currentscore[1] = {0};
-UINT8 topscore[1] = {0};
+UINT8 bestscore[1] = {0};
+int topscore = 0;
 
 void score(){
     scr += 10;
-    currentscore[0] = scr;
-
-//    if(currentscore[0] >= topscore[0]){
-//        currentscore[0] == topscore[0];
-//    }
 }
 
 UBYTE checkcollision(struct GameCharacter* one, struct GameCharacter* two){
@@ -314,13 +379,6 @@ UBYTE checkcollision(struct GameCharacter* one, struct GameCharacter* two){
 }
 
 int lives = 3;
-
-void gameover(){
-    if(lives == 0){
-    died();
-    printf("\n \n \n === GAME OVER === \n \n======= %d",scr, "=====");
-    }
-}
 
 void collisioncheck(){
     if(checkcollision(&player,&alien1)){
@@ -366,8 +424,9 @@ void laserblast(){
         }
 }
 
-void main(){
-
+void setupENV(){
+    ENABLE_RAM_MBC1;
+    
     NR52_REG = 0x80;
     NR50_REG = 0x77;
     NR51_REG = 0xFF;
@@ -393,12 +452,61 @@ void main(){
     SHOW_BKG;
     SHOW_SPRITES;
     DISPLAY_ON;
+}
 
-    while(1){
+void gotogxy(UBYTE x, UBYTE y);
+
+
+////////////////////////////
+///Level End and Gameover
+////////////////////////////
+int gameover = 1;
+
+void endscreen(){
+
+//   set_bkg_data(0,255,NULL);
+//   set_bkg_tiles(0,0,20,18,NULL);
+
+    delay(100);
+
+    scroll_bkg(0,0);
+
+    SHOW_BKG;
+    DISPLAY_ON;
+
+ //   gotogxy(50,100);
+    
+    printf("\n \n \n \n \n === GAME OVER === \n \n \n \n \n === %d",scr);
+
+}
+
+void isgameover(){
+    if(lives == 0){
+        storealiens();
+
+        HIDE_BKG;
+        HIDE_WIN;
+        DISPLAY_OFF;
+   
+        gameover = 0;
+    }
+}
+
+
+////////////////////////////
+///MAIN
+////////////////////////////
+void main(){
+
+    splashscreen();
+
+    setupENV();
+
+    while(gameover){
 
         collisioncheck();
-               
-        scroll_bkg(0,-4);
+            
+        scroll_bkg(0,-3);
 
         ohjoy();
 
@@ -412,6 +520,14 @@ void main(){
 
         performancedelay(2);
 
-        gameover();
+        isgameover();
+
     }
+
+    while(1){
+
+        endscreen();
+    }
+
+
 }
