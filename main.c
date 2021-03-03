@@ -13,6 +13,7 @@
 #include "splashtiles.c"
 #include "blankmap.c"
 #include "blanktiles.c"
+#include "collisionmap.c"
 
 struct GameCharacter player;
 struct GameCharacter alien1;
@@ -125,11 +126,6 @@ void setupalienship1(){
     set_sprite_tile(19,11);
     alienship1.spriteids[3] = 19;
 
-//    set_sprite_prop(16, S_PRIORITY);
-//    set_sprite_prop(17, S_PRIORITY);
-//    set_sprite_prop(18, S_PRIORITY);
-//    set_sprite_prop(19, S_PRIORITY);
-
     movegamecharacter(&alienship1, alienship1.x,alienship1.y); 
 }
 
@@ -138,7 +134,6 @@ void movealiens1(){
     alien1.x += 2;
 
     alienship1.y += 2;
-//    alienship2.y += 1;
 
     alien2.y += 1;
     alien2.x -= 2;
@@ -351,6 +346,14 @@ void ohjoy(){
         if(joypad() & J_START){
             pause();
         }  
+
+        if(!(joypad()& J_UP)){
+            player.y += 1;
+            movegamecharacter(&player, player.x, player.y);
+            if(player.y >= 130){
+                player.y = 130;
+            }
+        }
 }
 
 void movecharacters(){
@@ -419,9 +422,14 @@ void laserblast(){
     if(checkcollision(&laser, &alienship1)){
             explosion();
             score();
+            score();
             alienship1.x = 0;
             alienship1.y = 0;
         }
+}
+
+void interuptLCD(){
+    HIDE_WIN;
 }
 
 void setupENV(){
@@ -452,6 +460,10 @@ void setupENV(){
     SHOW_BKG;
     SHOW_SPRITES;
     DISPLAY_ON;
+
+    add_LCD(interuptLCD);
+    enable_interrupts();
+    set_interrupts(VBL_IFLAG | LCD_IFLAG);
 }
 
 void gotogxy(UBYTE x, UBYTE y);
@@ -503,6 +515,9 @@ void main(){
     setupENV();
 
     while(gameover){
+        scrx = x + 8;
+        scry = y +16;
+ //       move_sprite(0,scrx, scry);
 
         collisioncheck();
             
