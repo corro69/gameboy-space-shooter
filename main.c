@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include "splashmap.c"
 #include "splashtiles.c"
-#include "blankmap.c"
+//#include "blankmap.c"
 #include "blanktiles.c"
 #include "collisionmap.c"
 
@@ -22,7 +22,6 @@ struct GameCharacter alienship1;
 struct GameCharacter laser;
 
 UBYTE spritesize = 8;
-//const char blankmap[1] = {0x00};
 
 void splashscreen(){
     set_bkg_data(0, 52, splashtiles);
@@ -41,7 +40,6 @@ void performancedelay(UINT8 numloops){
     }
 }
 
-
 ///////////////////////////////
 //Character setup
 //////////////////////////////
@@ -54,7 +52,7 @@ void movegamecharacter(struct GameCharacter* character, UINT8 x, UINT8 y){
 
 void setupplayer(){
     player.x = 80;
-    player.y = 130;
+    player.y = 100;
     player.width = 16;
     player.height = 16;
    
@@ -112,7 +110,7 @@ void setupalien2(){
 }
 
 void setupalienship1(){
-    alienship1.x = 100;
+    alienship1.x = 80;
     alienship1.y = 0;
     alienship1.width = 16;
     alienship1.height = 16;
@@ -133,7 +131,7 @@ void movealiens1(){
     alien1.y += 1;
     alien1.x += 2;
 
-    alienship1.y += 2;
+    alienship1.y += 4;
 
     alien2.y += 1;
     alien2.x -= 2;
@@ -164,11 +162,18 @@ void movealiens1(){
             alienship1.y = 0;
             alienship1.x = rand();
         }
+        if(alienship1.x < 20){
+            alienship1.x = 20;
+        }
+        if(alienship1.x > 140){
+            alienship1.x = 140;
+        }
 }
 
 int max_laser = 3;
 int laser_active = 0;
 bool fire;
+int alien_fire = 0;
 
 void setuplaser(){
     laser.x = 0;
@@ -197,10 +202,24 @@ void move_lasers(){
     }
 }
 
-void storealiens(){
-    player.x = 80;
-    player.y = 130;
+void alien_lasers(){
+        laser.x = alienship1.x;
+        laser.y = alienship1.y + 5;
 
+        NR10_REG = 0x2F;
+        NR11_REG = 0x4C;
+        NR12_REG = 0xF8;
+        NR13_REG = 0x33;
+        NR14_REG = 0xC7;
+
+        laser.y += 5;
+    
+    if(laser.y <= 0){
+        laser.y = 0;
+    }
+}
+
+void storealiens(){
     alienship1.x = 0;
     alienship1.y = 0;
     
@@ -211,6 +230,15 @@ void storealiens(){
     alien2.y = 0;
 }
 
+void hide_player(){
+    player.x = 0;
+    player.y = 0;
+}
+
+void reset_player(){
+    player.x = 80;
+    player.y = 100;
+}
 
 /////////////////////////////////
 // SOUNDS
@@ -230,6 +258,9 @@ void died(){
     NR14_REG = 0xC5;
 
     storealiens();
+    hide_player();
+    delay(1000);
+    reset_player();
 }
 
 void explosion(){
@@ -260,24 +291,25 @@ void explosion(){
 //    NR24_REG = 0x86;
 }
 
-
 ////////////////////////////
-///MAP Detection
+///MAP Detection--- I can only get this to work on a stationary background---
 ///////////////////////////
-UINT8 playerlocation[2] = {player.x, player.y};
+unsigned char blankmap[1] = {0x00};
+unsigned char background_test_tiles[7] = {0x26,0x27,0x2A,0x2B,0x2F,0x31,0x34};
 
-//void canplayermove(UINT8 newplayerX, UINT8 newplayerY){
-//    
-//    UINT16 indexTlx, indexTly, tileindex;
-//    UBYTE result;
-//
-//    indexTlx = (playerlocation[0] - 8) /8;
-//    indexTly = (playerlocation[1] - 17) /8;
-//
-//    tileindex = 20 * indexTlx + indexTly;
-//}
-//    result = background[tileindex] == blankmap[0];   
+UBYTE if_can_move(UINT8 newplayerX, UINT8 newplayerY){
+    UINT16 indexTLx, indexTLy, tileindexTL;
+    UBYTE result;
 
+    indexTLx = (newplayerX - 8) /8;
+    indexTLy = (newplayerY - 16) /8;
+    
+    tileindexTL = 20 * indexTLy + indexTLx;
+
+//   result = background[tileindexTL] == blankmap[0];  
+    result = background[tileindexTL] == !background_test_tiles[0,1,2,3,4,5,6]; 
+    return result;
+}
 
 /////////////////////////////////
 //Controls 
@@ -297,32 +329,40 @@ void pause(){
 void ohjoy(){
 
         if(joypad() & J_LEFT){
+ //           if(if_can_move(player.x -3, player.y)){
             player.x -= 3;
-            movegamecharacter(&player, player.x, player.y); 
-                if(player.x <= 10){
-                    player.x = 10; 
+            movegamecharacter(&player, player.x, player.y);
+//        }
+               if(player.x <= 20){
+                   player.x = 20; 
                 } 
         }
 
         if(joypad() & J_RIGHT){
+//           if(if_can_move(player.x +16, player.y)){
             player.x += 3;
             movegamecharacter(&player, player.x, player.y);
-                if(player.x >= 150){
-                    player.x = 150;
+//        }
+               if(player.x >= 140){
+                   player.x = 140;
                 }
         }
 
         if(joypad()& J_UP){
+//            if(if_can_move(player.x, player.y -3)){
             player.y -= 3;
             movegamecharacter(&player, player.x, player.y);
-               if(player.y <= 60){
-                    player.y = 60;
+//        }
+               if(player.y <= 30){
+                    player.y = 30;
             }
         }
 
         if(joypad()& J_DOWN){
+//            if(if_can_move(player.x, player.y +16)){
             player.y += 3;
             movegamecharacter(&player, player.x, player.y);
+//        }
                if(player.y >= 130){
                     player.y = 130;
             }
@@ -348,8 +388,10 @@ void ohjoy(){
         }  
 
         if(!(joypad()& J_UP)){
+//            if(if_can_move(player.x, player.y +16)){
             player.y += 1;
             movegamecharacter(&player, player.x, player.y);
+//        }
             if(player.y >= 130){
                 player.y = 130;
             }
@@ -361,9 +403,9 @@ void movecharacters(){
         movegamecharacter(&alien1, alien1.x, alien1.y);
         movegamecharacter(&alien2, alien2.x, alien2.y);
         movegamecharacter(&alienship1, alienship1.x, alienship1.y);
+//        movegamecharacter(&alienship2, alienship2.x, alienship2.y);
         movegamecharacter(&laser,laser.x, laser.y);
 }
-
 
 //////////////////////////////////
 // Collision Detection and scoring
@@ -372,6 +414,7 @@ int scr = 0;
 UINT8 currentscore[1] = {0};
 UINT8 bestscore[1] = {0};
 int topscore = 0;
+int lives = 3;
 
 void score(){
     scr += 10;
@@ -380,8 +423,6 @@ void score(){
 UBYTE checkcollision(struct GameCharacter* one, struct GameCharacter* two){
     return(one->x >= two->x && one->x <= two->x + two->width) && (one->y >= two->y && one->y <= two->y + two->height) || (two->x >= one->x && two->x <= one->x + one->width) && (two->y >= one->y && two->y <= one-> y+ one->height);
 }
-
-int lives = 3;
 
 void collisioncheck(){
     if(checkcollision(&player,&alien1)){
@@ -426,6 +467,14 @@ void laserblast(){
             alienship1.x = 0;
             alienship1.y = 0;
         }
+
+ //   if(checkcollision(&laser, &alienship2)){
+ //       explosion();
+ //       score();
+ //       score();
+ //       alienship2.x = 0;
+ //       alienship2.y = 0;
+ //   }
 }
 
 void interuptLCD(){
@@ -468,43 +517,22 @@ void setupENV(){
 
 void gotogxy(UBYTE x, UBYTE y);
 
-
 ////////////////////////////
 ///Level End and Gameover
 ////////////////////////////
-int gameover = 1;
-
-void endscreen(){
-
-//   set_bkg_data(0,255,NULL);
-//   set_bkg_tiles(0,0,20,18,NULL);
-
-    delay(100);
-
-    scroll_bkg(0,0);
-
-    SHOW_BKG;
-    DISPLAY_ON;
-
- //   gotogxy(50,100);
-    
-    printf("\n \n \n \n \n === GAME OVER === \n \n \n \n \n === %d",scr);
-
-}
+int gameover = 0;
 
 void isgameover(){
     if(lives == 0){
         storealiens();
-
-        HIDE_BKG;
-        HIDE_WIN;
-        DISPLAY_OFF;
-   
-        gameover = 0;
+        gameover = 1;
     }
 }
 
-
+void endscreen(){
+    delay(100);
+    printf("\n \n \n \n \n === GAME OVER === \n \n \n \n \n === %d",scr);
+}
 ////////////////////////////
 ///MAIN
 ////////////////////////////
@@ -514,10 +542,7 @@ void main(){
 
     setupENV();
 
-    while(gameover){
-        scrx = x + 8;
-        scry = y +16;
- //       move_sprite(0,scrx, scry);
+    while(!gameover){
 
         collisioncheck();
             
@@ -533,13 +558,12 @@ void main(){
 
         move_lasers();
 
-        performancedelay(2);
-
         isgameover();
 
+        performancedelay(2);
     }
 
-    while(1){
+    while(gameover){
 
         endscreen();
     }
