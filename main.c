@@ -11,17 +11,82 @@
 #include <stdbool.h>
 #include "splashmap.c"
 #include "splashtiles.c"
-//#include "blankmap.c"
+#include "blankmap.c"
 #include "blanktiles.c"
 #include "collisionmap.c"
+#include <time.h>
+#include <math.h>
+#include <gb/drawing.h>
+#include <gb/hardware.h>
+
+//extern UINT8 topscore[1];
 
 struct GameCharacter player;
 struct GameCharacter alien1;
 struct GameCharacter alien2;
 struct GameCharacter alienship1;
+struct GameCharacter alienship2;
 struct GameCharacter laser;
+struct GameCharacter alien_laser;
+
+#define M_NO_SCROLL 0x04U
 
 UBYTE spritesize = 8;
+
+UINT8 i;
+
+void performancedelay(UINT8 numloops){
+    UINT8 i;
+    for(i = 0; i < numloops; i++){
+        wait_vbl_done();
+    }
+}
+
+void fade_out(){
+    for(i=0;i<4;i++){
+        switch (i){
+        case 0/* constant-expression */:
+            BGP_REG = 0xE4;/* code */
+            break;
+        case 1:
+            BGP_REG = 0xF9;
+            break;
+        case 2:
+            BGP_REG = 0xFE;
+            break;
+        case 3:
+            BGP_REG = 0xFF;
+            break;
+        }
+    performancedelay(10);
+    }
+}
+
+void fade_in(){
+    for(i=0;i<4;i++){
+        switch (i){
+        case 0/* constant-expression */:
+            BGP_REG = 0xFF;/* code */
+            break;
+        case 1:
+            BGP_REG = 0xFE;
+            break;
+        case 2:
+            BGP_REG = 0xF9;
+            break;
+        case 3:
+            BGP_REG = 0xE4;
+        }
+    performancedelay(10);
+    }
+}
+
+//void the_timer(){
+//    clock_t t;
+//    t = clock();
+//    t = clock() -t;
+//    printf("(%f seconds).\n",t,((float)t)/CLOCKS_PER_SEC);
+//}
 
 void splashscreen(){
     set_bkg_data(0, 52, splashtiles);
@@ -29,15 +94,13 @@ void splashscreen(){
     SHOW_BKG;
     DISPLAY_ON;
     delay(1000);
-    printf("\n \n \n \n \n     Level One \n \n \n \n \n ===Press Start===");
+    fade_out();
+    delay(1000);
+    printf("\n \n \n \n \n \n \n \n \n \n ===Press Start===");
+    fade_in();
     waitpad(J_START);
-}
-
-void performancedelay(UINT8 numloops){
-    UINT8 i;
-    for(i = 0; i < numloops; i++){
-        wait_vbl_done();
-    }
+    fade_out();
+    delay(1000);
 }
 
 ///////////////////////////////
@@ -127,11 +190,31 @@ void setupalienship1(){
     movegamecharacter(&alienship1, alienship1.x,alienship1.y); 
 }
 
+void setupalienship2(){
+    alienship2.x = 100;
+    alienship2.y = 0;
+    alienship2.width = 16;
+    alienship2.height = 16;
+   
+    set_sprite_tile(32,8);
+    alienship2.spriteids[0] = 32;
+    set_sprite_tile(33,9);
+    alienship2.spriteids[1] = 33;
+    set_sprite_tile(34,10);
+    alienship2.spriteids[2] = 34;
+    set_sprite_tile(35,11);
+    alienship2.spriteids[3] = 35;
+
+    movegamecharacter(&alienship2, alienship2.x,alienship2.y); 
+}
+
 void movealiens1(){
     alien1.y += 1;
     alien1.x += 2;
 
     alienship1.y += 4;
+
+    alienship2.y += 4;
 
     alien2.y += 1;
     alien2.x -= 2;
@@ -168,6 +251,17 @@ void movealiens1(){
         if(alienship1.x > 140){
             alienship1.x = 140;
         }
+
+        if(alienship2.y >= 144){
+            alienship2.y = 0;
+            alienship2.x = rand();
+        }
+        if(alienship2.x < 20){
+            alienship2.x = 20;
+        }
+        if(alienship2.x > 140){
+            alienship2.x = 140;
+        }
 }
 
 int max_laser = 3;
@@ -202,9 +296,26 @@ void move_lasers(){
     }
 }
 
+void setup_alien_laser(){
+    alien_laser.x = 0;
+    alien_laser.y = 0;
+    alien_laser.width = 16;
+    alien_laser.height = 16;
+
+    set_sprite_tile(28,12);
+    alien_laser.spriteids[0] = 28;
+    set_sprite_tile(29,13);
+    alien_laser.spriteids[1] = 29;
+    set_sprite_tile(30,14);
+    alien_laser.spriteids[2] = 30;
+    set_sprite_tile(31,15);
+    alien_laser.spriteids[3] = 31;
+
+    movegamecharacter(&alien_laser, alien_laser.x, alien_laser.y);
+}
+
 void alien_lasers(){
-        laser.x = alienship1.x;
-        laser.y = alienship1.y + 5;
+    if(alien_fire == 0){
 
         NR10_REG = 0x2F;
         NR11_REG = 0x4C;
@@ -212,16 +323,24 @@ void alien_lasers(){
         NR13_REG = 0x33;
         NR14_REG = 0xC7;
 
-        laser.y += 5;
+        alien_laser.x = alienship1.x;
+        alien_laser.y = alienship1.y + 5;
+        alien_laser.y += 25;
+        alien_fire += 1;
+    }
     
-    if(laser.y <= 0){
-        laser.y = 0;
+    if(alien_laser.y <= 0){
+        alien_laser.y = 0;
+        alien_fire -= 0; 
     }
 }
 
 void storealiens(){
     alienship1.x = 0;
     alienship1.y = 0;
+
+    alienship2.x = 0;
+    alienship2.y = 0;
     
     alien1.x = 0;
     alien1.y = 0;
@@ -259,8 +378,10 @@ void died(){
 
     storealiens();
     hide_player();
+    fade_out();
     delay(1000);
     reset_player();
+    fade_in();
 }
 
 void explosion(){
@@ -291,23 +412,32 @@ void explosion(){
 //    NR24_REG = 0x86;
 }
 
+void laser_fire(){
+    NR10_REG = 0x2F;
+    NR11_REG = 0x4C;
+    NR12_REG = 0xF8;
+    NR13_REG = 0x33;
+    NR14_REG = 0xC7;
+}
+
 ////////////////////////////
 ///MAP Detection--- I can only get this to work on a stationary background---
 ///////////////////////////
-unsigned char blankmap[1] = {0x00};
+unsigned char blankmap_tile[1] = {0x00};
 unsigned char background_test_tiles[7] = {0x26,0x27,0x2A,0x2B,0x2F,0x31,0x34};
 
 UBYTE if_can_move(UINT8 newplayerX, UINT8 newplayerY){
     UINT16 indexTLx, indexTLy, tileindexTL;
     UBYTE result;
 
-    indexTLx = (newplayerX - 8) /8;
-    indexTLy = (newplayerY - 16) /8;
+    indexTLx = (newplayerX + player.width - 8) /8;
+    indexTLy = (newplayerY + player.height - 16) /8;
     
     tileindexTL = 20 * indexTLy + indexTLx;
 
-//   result = background[tileindexTL] == blankmap[0];  
+    result = background[tileindexTL] == blankmap_tile[0];  
     result = background[tileindexTL] == !background_test_tiles[0,1,2,3,4,5,6]; 
+    
     return result;
 }
 
@@ -374,12 +504,7 @@ void ohjoy(){
                 laser.x = player.x;
                 laser.y = player.y - 5;
                 fire = TRUE;
-
-                NR10_REG = 0x2F;
-                NR11_REG = 0x4C;
-                NR12_REG = 0xF8;
-                NR13_REG = 0x33;
-                NR14_REG = 0xC7;
+                laser_fire();
             }
         }
 
@@ -403,8 +528,9 @@ void movecharacters(){
         movegamecharacter(&alien1, alien1.x, alien1.y);
         movegamecharacter(&alien2, alien2.x, alien2.y);
         movegamecharacter(&alienship1, alienship1.x, alienship1.y);
-//        movegamecharacter(&alienship2, alienship2.x, alienship2.y);
+        movegamecharacter(&alienship2, alienship2.x, alienship2.y);
         movegamecharacter(&laser,laser.x, laser.y);
+        movegamecharacter(&alien_laser, alien_laser.x, alien_laser.y);
 }
 
 //////////////////////////////////
@@ -415,6 +541,9 @@ UINT8 currentscore[1] = {0};
 UINT8 bestscore[1] = {0};
 int topscore = 0;
 int lives = 3;
+int gameover = 0;
+int z = -3;
+int level = 1;
 
 void score(){
     scr += 10;
@@ -424,25 +553,40 @@ UBYTE checkcollision(struct GameCharacter* one, struct GameCharacter* two){
     return(one->x >= two->x && one->x <= two->x + two->width) && (one->y >= two->y && one->y <= two->y + two->height) || (two->x >= one->x && two->x <= one->x + one->width) && (two->y >= one->y && two->y <= one-> y+ one->height);
 }
 
+//void background_collision(){
+//    for(int i = 0; i < 100; i++){
+//       if(player.x >= background_test_tiles[i].x && player.x <= background_test_tiles[i].x + background_test_tiles[i]->width) && (player.y >= background_test_tiles[i].y && player.y <= background_test_tiles[i].y + background_test_tiles[i]->height) || (background_test_tiles[i].x >= player.x && background_test_tiles[i].x <= player.x + player->width) && (background_test_tiles[i].y >= player.y && background_test_tiles[i].y <= player.y + player->height);
+//        lives -= 1;
+//        died();
+//    }
+//}
+
 void collisioncheck(){
     if(checkcollision(&player,&alien1)){
         alien1.x = 0;
         alien1.y = 0;
-        died();
         lives -= 1;
+        died();
     }
     else if(checkcollision(&player, &alien2)){
         alien2.x = 0;
         alien2.y = 0;
-        died();
         lives -= 1;
+        died();
     } 
     else if(checkcollision(&player, &alienship1)){
         alienship1.x = 0;
         alienship1.y = 0;
-        died();
         lives -= 1;
+        died();
     }
+
+    else if(checkcollision(&player, &alienship2)){
+    alienship2.x = 0;
+    alienship2.y = 0;
+    lives -= 1;
+    died();
+}
 }
 
 void laserblast(){
@@ -468,18 +612,66 @@ void laserblast(){
             alienship1.y = 0;
         }
 
- //   if(checkcollision(&laser, &alienship2)){
- //       explosion();
- //       score();
- //       score();
- //       alienship2.x = 0;
- //       alienship2.y = 0;
- //   }
+    if(checkcollision(&laser, &alienship2)){
+            explosion();
+            score();
+            score();
+            alienship2.x = 0;
+            alienship2.y = 0;
+        }
 }
 
 void interuptLCD(){
     HIDE_WIN;
 }
+
+void gotogxy(UBYTE x, UBYTE y);
+
+////////////////////////////
+///Level End and Gameover
+////////////////////////////
+void isgameover(){
+    if(lives == 0){
+        storealiens();
+        gameover = 1;
+        level = 0;
+        fade_out();
+        delay(1000);
+        DISABLE_RAM_MBC1;
+        HIDE_BKG;
+        HIDE_SPRITES;
+        DISPLAY_OFF;
+    }
+}
+
+void endscreen(){
+    fade_in();
+
+    set_bkg_data(0,1,blanktiles);
+    set_bkg_tiles(0,0,20,18,blankmap);
+
+    SHOW_BKG;
+    SHOW_SPRITES;
+    DISPLAY_ON;
+//   M_NO_SCROLL;
+//   printf("\n \n \n \n \n === GAME OVER === \n \n \n \n \n === %d",scr);
+}
+
+int restart = 1;
+
+//int countdown(){
+//    clock_t begin;
+//    double time_spent;
+//    unsigned int i;
+//
+//    begin = clock();
+//    for(i=0; 1; i++){
+//        time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+//        if (time_spent >= 120.0)
+//        break;
+//    }
+//    return(0);
+//}
 
 void setupENV(){
     ENABLE_RAM_MBC1;
@@ -493,79 +685,91 @@ void setupENV(){
     min_font = font_load(font_min);
     font_set(min_font);
 
+    add_LCD(interuptLCD);
+    enable_interrupts();
+    set_interrupts(VBL_IFLAG | LCD_IFLAG);
+
+    fade_in();
+}
+
+void Level1ENV(){
     set_bkg_data(37,16,backgroundtiles);
     set_bkg_tiles(0,0,20,36,background);
     set_win_tiles(0,0,5,1,windowmap);
     move_win(7,135);
 
-    set_sprite_data(0,20, GameSprites);
+    set_sprite_data(0,24, GameSprites);
     setupplayer();
     setupalien1();
     setupalien2();
     setupalienship1();
+    setupalienship2();
     setuplaser();
+    setup_alien_laser();
 
-    SHOW_WIN;
+ //   SHOW_WIN;
     SHOW_BKG;
     SHOW_SPRITES;
     DISPLAY_ON;
-
-    add_LCD(interuptLCD);
-    enable_interrupts();
-    set_interrupts(VBL_IFLAG | LCD_IFLAG);
 }
 
-void gotogxy(UBYTE x, UBYTE y);
+void Level1(){
 
-////////////////////////////
-///Level End and Gameover
-////////////////////////////
-int gameover = 0;
+    collisioncheck();
 
-void isgameover(){
-    if(lives == 0){
-        storealiens();
-        gameover = 1;
-    }
+//    background_collision();
+        
+    scroll_bkg(0,-3);
+
+    ohjoy();
+
+    laserblast();
+
+    movealiens1();
+
+    movecharacters();
+
+    move_lasers();
+
+//   alien_lasers();
+
+    isgameover();
+
+    performancedelay(2);
 }
 
-void endscreen(){
-    delay(100);
-    printf("\n \n \n \n \n === GAME OVER === \n \n \n \n \n === %d",scr);
-}
 ////////////////////////////
 ///MAIN
 ////////////////////////////
 void main(){
+    while(1){
 
-    splashscreen();
+        splashscreen();
 
-    setupENV();
+        setupENV();
 
-    while(!gameover){
+        while(!gameover){
 
-        collisioncheck();
-            
-        scroll_bkg(0,-3);
+            printf("\n \n \n \n \n \n \n \n \n       LEVEL 1");
+            delay(1000);
 
-        ohjoy();
+            Level1ENV();
 
-        laserblast();
+            while(level == 1){
 
-        movealiens1();
-        
-        movecharacters();
+                Level1();
+            }
+        }
 
-        move_lasers();
+        while(gameover){
+            endscreen();
 
-        isgameover();
-
-        performancedelay(2);
-    }
-
-    while(gameover){
-
-        endscreen();
+            while(restart){
+                scroll_bkg(0,0);
+                printf("\n \n \n \n \n === GAME OVER === \n \n \n \n \n === %d",scr);
+                performancedelay(10);
+            }
+        }
     }
 
 
