@@ -1,4 +1,4 @@
-# gameboy-space-shooter
+# D's Space Attack
 
 A simple space shooter for the BameBoy. there is 1 level at the moment and there are some bugs.
 
