@@ -1,5 +1,5 @@
 # D's Space Attack
-D's Space Attack is a top-down space shooter for the Gameboy. This game is still being devloped.
+D's Space Attack is a top-down space shooter for the Gameboy. This game is still being developed.
 To play the game you will need a Gameboy emulator.
 
 
