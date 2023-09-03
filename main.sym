@@ -1,0 +1,155 @@
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 1.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+    .__.$$$.                                                    =  002710 L
+    .__.ABS.                                                    =  000000 G
+    .__.CPU.                                                    =  000000 L
+    .__.H$L.                                                    =  000000 L
+    _BGP_REG                                                       ****** GX
+  1 _GameSprites                                                   000000 GR
+    _LCDC_REG                                                      ****** GX
+  0 _Level1                                                        000EBF GR
+  0 _Level1ENV                                                     000DC6 GR
+  0 _Level2                                                        000EE3 GR
+    _NR10_REG                                                      ****** GX
+    _NR11_REG                                                      ****** GX
+    _NR12_REG                                                      ****** GX
+    _NR13_REG                                                      ****** GX
+    _NR14_REG                                                      ****** GX
+    _NR41_REG                                                      ****** GX
+    _NR42_REG                                                      ****** GX
+    _NR43_REG                                                      ****** GX
+    _NR44_REG                                                      ****** GX
+    _NR50_REG                                                      ****** GX
+    _NR51_REG                                                      ****** GX
+    _NR52_REG                                                      ****** GX
+    _SCX_REG                                                       ****** GX
+    _SCY_REG                                                       ****** GX
+    _WX_REG                                                        ****** GX
+    _WY_REG                                                        ****** GX
+  0 ___str_0                                                       00016F R
+  0 ___str_1                                                       000D39 R
+  0 ___str_2                                                       000E52 R
+    _add_LCD                                                       ****** GX
+  1 _alien1                                                        00114D GR
+  1 _alien2                                                        001169 GR
+  1 _alien_fire                                                    0011FC GR
+  1 _alien_laser                                                   0011D9 GR
+  0 _alien_lasers                                                  000608 GR
+  1 _alienship1                                                    001185 GR
+  1 _alienship2                                                    0011A1 GR
+  1 _background                                                    000185 GR
+  1 _background_test_tiles                                         0011FE GR
+  1 _backgroundtiles                                               000455 GR
+  1 _bestscore                                                     001209 GR
+  1 _blankmap                                                      000A0D GR
+  0 _blankmap_tile                                                 0007A2 GR
+  1 _blanktiles                                                    000B75 GR
+  0 _checkcollision                                                000A39 GR
+  0 _collisioncheck                                                000BCA GR
+  1 _collisionmap                                                  000B91 GR
+  1 _currentscore                                                  001207 GR
+    _delay                                                         ****** GX
+  0 _died                                                          000695 GR
+    _display_off                                                   ****** GX
+    _enable_interrupts                                             ****** GX
+  0 _endscreen                                                     000D02 GR
+  0 _engine                                                        000684 GR
+  0 _explosion                                                     0006C1 GR
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 2.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+  0 _fade_in                                                       0000C1 GR
+  0 _fade_out                                                      000078 GR
+  1 _fire                                                          0011FB GR
+    _font_init                                                     ****** GX
+    _font_load                                                     ****** GX
+    _font_min                                                      ****** GX
+    _font_set                                                      ****** GX
+  1 _gameover                                                      00120F GR
+  0 _gridpos                                                       000000 GR
+  1 _gridx                                                         000B85 GR
+  1 _gridy                                                         000B87 GR
+  0 _hide_player                                                   00066E GR
+  1 _i                                                             0011F6 GR
+  0 _if_can_move                                                   0006E7 GR
+  0 _interuptLCD                                                   000CFB GR
+  0 _isgameover                                                    000D66 GR
+    _joypad                                                        ****** GX
+  1 _laser                                                         0011BD GR
+  1 _laser_active                                                  0011F9 GR
+  0 _laser_fire                                                    0006D2 GR
+  0 _laserblast                                                    000C71 GR
+  1 _level                                                         001213 GR
+  0 _level_timer                                                   000E73 GR
+  1 _lives                                                         00120D GR
+  0 _main                                                          000F07 GR
+  1 _max_laser                                                     0011F7 GR
+  0 _move_lasers                                                   000599 GR
+  0 _movealiens1                                                   0003AC GR
+  0 _movealiens2                                                   00047B GR
+  0 _movecharacters1                                               000953 GR
+  0 _movecharacters2                                               0009C0 GR
+  0 _movegamecharacter                                             000195 GR
+  0 _ohjoy                                                         0007AC GR
+  0 _pause                                                         0007A3 GR
+  0 _performancedelay                                              00006B GR
+  1 _player                                                        001131 GR
+    _printf                                                        ****** GX
+    _rand                                                          ****** GX
+  0 _reset_player                                                  000679 GR
+  1 _restart                                                       001217 GR
+  0 _score                                                         000A2D GR
+  1 _scr                                                           001205 GR
+  1 _scrx                                                          000B8D GR
+  1 _scry                                                          000B8F GR
+    _set_bkg_data                                                  ****** GX
+    _set_bkg_tiles                                                 ****** GX
+    _set_interrupts                                                ****** GX
+    _set_sprite_data                                               ****** GX
+    _set_win_tiles                                                 ****** GX
+  0 _setupENV                                                      000D8C GR
+  0 _setup_alien_laser                                             0005B9 GR
+  0 _setupalien1                                                   000270 GR
+  0 _setupalien2                                                   0002BF GR
+  0 _setupalienship1                                               00030E GR
+  0 _setupalienship2                                               00035D GR
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 3.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+  0 _setuplaser                                                    00054A GR
+  0 _setupplayer                                                   000222 GR
+    _shadow_OAM                                                    ****** GX
+  1 _splashmap                                                     000565 GR
+  0 _splashscreen                                                  00010A GR
+  1 _splashtiles                                                   0006CD GR
+  1 _spritesize                                                    0011F5 GR
+  0 _storealiens                                                   000645 GR
+  1 _timer                                                         001215 GR
+  1 _topscore                                                      00120B GR
+    _wait_vbl_done                                                 ****** GX
+    _waitpad                                                       ****** GX
+  1 _windowmap                                                     000180 GR
+  1 _x                                                             000B89 GR
+  1 _y                                                             000B8B GR
+  1 _z                                                             001211 GR
+
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 4.
+Hexadecimal [24-Bits]
+
+Area Table
+
+   0 _CODE                                      size    F3A   flags    0
+   1 _DATA                                      size   1219   flags    0
+   2 _DABS                                      size      0   flags    8
+   3 _HOME                                      size      0   flags    0
+   4 _GSINIT                                    size   4ED9   flags    0
+   5 _GSFINAL                                   size      0   flags    0
+   6 _CABS                                      size      0   flags    8
+
